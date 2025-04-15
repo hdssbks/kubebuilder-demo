@@ -44,6 +44,7 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+// 将所有的类型添加到scheme中，包括内置的和自定义的
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -57,6 +58,7 @@ func main() {
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
+	// 定义命令行参数，使用方法./manager --metrics-bind-address=:8080 --leader-elect=true
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -70,6 +72,7 @@ func main() {
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
+	// 解析命令行参数, 必须添加, 否则无法解析命令行参数
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
