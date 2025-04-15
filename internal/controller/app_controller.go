@@ -18,7 +18,8 @@ package controller
 
 import (
 	"context"
-
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,10 +48,28 @@ type AppReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.2/pkg/reconcile
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+	app := &ingressv1beta1.App{}
+	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
-	// TODO(user): your logic here
-
+	deploy := utils.NewDeploy(app)
+	d := &v1.Deployment{}
+	err := r.Get(ctx, req.NamespacedName, d)
+	if err != nil && !errors.IsNotFound(err) {
+		return ctrl.Result{}, err
+	}
+	if err != nil && errors.IsNotFound(err) {
+		// Create Deployment
+		if err := r.Create(ctx, deploy); err != nil {
+			logger.Error(err, "create deployment failed")
+			return ctrl.Result{}, err
+		}
+	}
+	if err == nil {
+		// Update Deploy
+	}
 	return ctrl.Result{}, nil
 }
 

@@ -28,8 +28,11 @@ type AppSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of App. Edit app_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Name          string `json:"name"`
+	EnableSvc     *bool  `json:"enableSvc,omitempty"`
+	EnableIngress *bool  `json:"enableIngress,omitempty"`
+	Replicas      *int32 `json:"replicas,omitempty"`
+	Image         string `json:"image,omitempty"`
 }
 
 // AppStatus defines the observed state of App
