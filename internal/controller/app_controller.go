@@ -18,7 +18,9 @@ package controller
 
 import (
 	"context"
-	v1 "k8s.io/api/apps/v1"
+	appv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -49,13 +51,14 @@ type AppReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.2/pkg/reconcile
 func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	// 从缓存中获取app对象，如果没找到，表示删除事件，直接返回
 	app := &ingressv1beta1.App{}
 	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	deploy := utils.NewDeploy(app)
-	d := &v1.Deployment{}
+	deploy := utils.newDeploy(app)
+	d := &appv1.Deployment{}
 	err := r.Get(ctx, req.NamespacedName, d)
 	if err != nil && !errors.IsNotFound(err) {
 		return ctrl.Result{}, err
@@ -69,7 +72,85 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 	if err == nil {
 		// Update Deploy
+		if err := r.Update(ctx, deploy); err != nil {
+			logger.Error(err, "update deployment failed")
+			return ctrl.Result{}, err
+		}
 	}
+
+	svc := utils.newService(app)
+	s := &corev1.Service{}
+	// 从缓存中查找service对象
+	err = r.Get(ctx, req.NamespacedName, s)
+	// 遇到错误，返回
+	if err != nil && !errors.IsNotFound(err) {
+		return ctrl.Result{}, err
+	}
+	// 没找到service，创建
+	if err != nil && errors.IsNotFound(err) && *app.Spec.EnableSvc {
+		// Create Service
+		if err := r.Create(ctx, svc); err != nil {
+			logger.Error(err, "create service failed")
+			return ctrl.Result{}, err
+		}
+	}
+	// 找到service
+	if err == nil {
+		// 如果service enable,更新service
+		if *app.Spec.EnableSvc {
+			// Update Service
+			if err := r.Update(ctx, svc); err != nil {
+				logger.Error(err, "update service failed")
+				return ctrl.Result{}, err
+			}
+			// 否则删除service
+		} else {
+			if err := r.Delete(ctx, s); err != nil {
+				logger.Error(err, "delete service failed")
+				return ctrl.Result{}, err
+			}
+		}
+	}
+
+	if !*app.Spec.EnableSvc {
+		logger.Info("must enable service before create ingress")
+		return ctrl.Result{}, nil
+	}
+
+	ing := utils.newIngress(app)
+	i := &netv1.Ingress{}
+	// 从缓存中查找ingress对象
+	err = r.Get(ctx, req.NamespacedName, i)
+	// 遇到错误，返回
+	if err != nil && !errors.IsNotFound(err) {
+		return ctrl.Result{}, err
+	}
+	// 没找到ingress，创建
+	if err != nil && errors.IsNotFound(err) && *app.Spec.EnableIngress {
+		// Create Ingress
+		if err := r.Create(ctx, ing); err != nil {
+			logger.Error(err, "create ingress failed")
+			return ctrl.Result{}, err
+		}
+	}
+	// 找到ingress
+	if err == nil {
+		// 如果ingress enable,更新ingress
+		if *app.Spec.EnableIngress {
+			// Update Ingress
+			if err := r.Update(ctx, ing); err != nil {
+				logger.Error(err, "update ingress failed")
+				return ctrl.Result{}, err
+			}
+			// 否则删除ingress
+		} else {
+			if err := r.Delete(ctx, i); err != nil {
+				logger.Error(err, "delete ingress failed")
+				return ctrl.Result{}, err
+			}
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
