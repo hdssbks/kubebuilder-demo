@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-
 	"github.com/zyw/kubebuilder-demo/utils"
 	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ingressv1beta1 "github.com/zyw/kubebuilder-demo/api/v1beta1"
@@ -60,6 +60,11 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	deploy := utils.NewDeploy(app)
+
+	if err := controllerutil.SetControllerReference(app, deploy, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	d := &appv1.Deployment{}
 	err := r.Get(ctx, req.NamespacedName, d)
 	if err != nil && !errors.IsNotFound(err) {
@@ -81,6 +86,10 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	svc := utils.NewService(app)
+	if err := controllerutil.SetControllerReference(app, svc, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	s := &corev1.Service{}
 	// 从缓存中查找service对象
 	err = r.Get(ctx, req.NamespacedName, s)
@@ -88,7 +97,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	if err != nil && !errors.IsNotFound(err) {
 		return ctrl.Result{}, err
 	}
-	// 没找到service，创建
+	// 没找到service，并且enableSvc=true,创建service
 	if err != nil && errors.IsNotFound(err) && *app.Spec.EnableSvc {
 		// Create Service
 		if err := r.Create(ctx, svc); err != nil {
@@ -120,6 +129,11 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	ing := utils.NewIngress(app)
+
+	if err := controllerutil.SetControllerReference(app, ing, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	i := &netv1.Ingress{}
 	// 从缓存中查找ingress对象
 	err = r.Get(ctx, req.NamespacedName, i)
