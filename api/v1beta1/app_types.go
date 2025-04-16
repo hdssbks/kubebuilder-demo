@@ -28,7 +28,6 @@ type AppSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Name          string `json:"name"`
 	EnableSvc     *bool  `json:"enableSvc,omitempty"`
 	EnableIngress *bool  `json:"enableIngress,omitempty"`
 	Replicas      *int32 `json:"replicas,omitempty"`
