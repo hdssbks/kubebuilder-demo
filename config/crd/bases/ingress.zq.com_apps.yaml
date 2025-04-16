@@ -45,13 +45,9 @@ spec:
                 type: boolean
               image:
                 type: string
-              name:
-                type: string
               replicas:
                 format: int32
                 type: integer
-            required:
-            - name
             type: object
           status:
             description: AppStatus defines the observed state of App
