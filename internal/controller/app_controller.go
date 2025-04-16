@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/zyw/kubebuilder-demo/utils"
 	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -159,5 +160,8 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ingressv1beta1.App{}).
+		Owns(&appv1.Deployment{}).
+		Owns(&corev1.Service{}).
+		Owns(&netv1.Ingress{}).
 		Complete(r)
 }
