@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"github.com/zyw/kubebuilder-demo/utils"
 	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
@@ -57,7 +58,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	deploy := utils.newDeploy(app)
+	deploy := utils.NewDeploy(app)
 	d := &appv1.Deployment{}
 	err := r.Get(ctx, req.NamespacedName, d)
 	if err != nil && !errors.IsNotFound(err) {
@@ -78,7 +79,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		}
 	}
 
-	svc := utils.newService(app)
+	svc := utils.NewService(app)
 	s := &corev1.Service{}
 	// 从缓存中查找service对象
 	err = r.Get(ctx, req.NamespacedName, s)
@@ -117,7 +118,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, nil
 	}
 
-	ing := utils.newIngress(app)
+	ing := utils.NewIngress(app)
 	i := &netv1.Ingress{}
 	// 从缓存中查找ingress对象
 	err = r.Get(ctx, req.NamespacedName, i)
