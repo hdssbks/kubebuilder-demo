@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{.ObjectMeta.Name}}
+  namespace: {{.ObjectMeta.Namespace}}
+Spec:
+  ingressClassName: nginx 
+  rules:
+  - host: {{.ObjectMeta.Name}}.zq.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{.ObjectMeta.Name}}
+            port:
+              number: 80
