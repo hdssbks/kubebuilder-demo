@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	ingressv1beta1 "github.com/zyw/kubebuilder-demo/api/v1beta1"
 )
@@ -79,10 +80,34 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 	if err == nil {
 		// Update Deploy
+		//Bug: 这里会反复触发更新
+		//原因：在187行SetupWithManager方法中，监听了Deployment，所以只要更新Deployment就会触发
+		//     此处更新和controllerManager更新Deployment都会触发更新事件，导致循环触发
+		//     这里只有Deployment的更新会触发App的Reconcile，Service和Ingress都不会触发，猜测的原因是Deployment Status的更新导致了该问题
+		//修复方法：
+		//方式1. 注释掉在148行SetupWithManager方法中对Deployment，Ingress，Service等的监听，该处的处理只是为了
+		//      手动删除Deployment等后能够自动重建，但正常不会出现这种情况，是否需要根据情况而定
+		//方式2. 加上判断条件，仅在app.Spec.Replicas != deployment.Spec.Replicas ||
+		//      app.Spec.Image != deployment.Spec.Template.Spec.Containers[0].Image时才更新deployment
+		//方式3. 添加Predicate，App的Spec发生变化时，才加入workqueue，例如:
+		/* 这里的predicate.GenerationChangedPredicate{}表示update事件中如果对象app.metadata.generation没有变化，则不加入到workqueue中
+		   而app.metadata.generation是一个int类型，当app.Spec发生变化，app.metadata.generation才会改变
+		func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
+			return ctrl.NewControllerManagedBy(mgr).
+				For(&ingressv1beta1.App{}).
+				Owns(&appv1.Deployment{}).
+				Owns(&corev1.Service{}).
+				Owns(&netv1.Ingress{}).
+				WithEventFilter(predicate.GenerationChangedPredicate{}).
+				Complete(r)
+		}
+		*/
+		//		if *app.Spec.Replicas != *d.Spec.Replicas || app.Spec.Image != d.Spec.Template.Spec.Containers[0].Image {
 		if err := r.Update(ctx, deploy); err != nil {
 			logger.Error(err, "update deployment failed")
 			return ctrl.Result{}, err
 		}
+		//		}
 	}
 
 	svc := utils.NewService(app)
@@ -100,6 +125,7 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	// 没找到service，并且enableSvc=true,创建service
 	if err != nil && errors.IsNotFound(err) && *app.Spec.EnableSvc {
 		// Create Service
+		logger.Info("create service")
 		if err := r.Create(ctx, svc); err != nil {
 			logger.Error(err, "create service failed")
 			return ctrl.Result{}, err
@@ -123,8 +149,21 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		}
 	}
 
+	// 当enableSvc为false时，直接返回，并检查是否存在ingress，如果存在，则删除
 	if !*app.Spec.EnableSvc {
-		logger.Info("must enable service before create ingress")
+		//logger.Info("must enable service before create ingress")
+
+		i := &netv1.Ingress{}
+		err = r.Get(ctx, req.NamespacedName, i)
+		if err != nil && !errors.IsNotFound(err) {
+			return ctrl.Result{}, err
+		} else if err != nil && errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		} else if err == nil {
+			if err := r.Delete(ctx, i); err != nil {
+				logger.Error(err, "delete ingress failed")
+			}
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -177,5 +216,6 @@ func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&appv1.Deployment{}).
 		Owns(&corev1.Service{}).
 		Owns(&netv1.Ingress{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 }
