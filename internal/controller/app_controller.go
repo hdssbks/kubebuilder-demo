@@ -39,9 +39,13 @@ type AppReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+// 由于我们的controller需要操作deployments，services，ingresses，当controller部署至集群中时，需要相应的权限，故需要添加相应的rbac
 //+kubebuilder:rbac:groups=ingress.zq.com,resources=apps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=ingress.zq.com,resources=apps/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=ingress.zq.com,resources=apps/finalizers,verbs=update
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -210,6 +214,18 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 }
 
 // SetupWithManager sets up the controller with the Manager.
+/*
+   Owns表示，当Owns的资源发生create，update，delete事件时，会触发For资源的Reconcile，前提是Owns资源的OwnerReference为For资源
+   在我们的例子中，当Deployment发生改变时，如在命令行中使用kubectl删除了Deployment，会触发App的Reconcile，重新创建Deployment
+
+   而OwnerReference表明了资源对象的从属关系，在Deployment中，Pod的OwnerReference为ReplicaSet，ReplicaSet的OwnerReference为Deployment
+   当一个资源对象的OwnerReference被删除时，该资源对象为孤儿状态，默认会被集群回收，这就解释了为什么我们删除Deployment时，ReplicaSet和Pod会被删除
+   删除资源时可以使用--cascade指定级联删除方式，可用的选项为background，foreground，orphan
+   background：删除主资源后立即返回，有系统回收子资源，默认值
+   frontend：等待子资源删除后，在删除主资源
+   orphan：只删除主资源，不删除子资源
+   另外OwnerReference不能跨Namespace，即一个资源对象的OwnerReference只能在该资源对象的Namespace下
+*/
 func (r *AppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ingressv1beta1.App{}).
