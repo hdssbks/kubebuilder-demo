@@ -22,8 +22,8 @@ ingress等资源。
 
 ```yaml
 type AppSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+    // INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+    // Important: Run "make" to regenerate code after modifying this file
 
     EnableSvc     *bool  `json:"enableSvc,omitempty"`
     EnableIngress *bool  `json:"enableIngress,omitempty"`
