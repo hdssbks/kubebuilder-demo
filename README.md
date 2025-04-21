@@ -6,7 +6,7 @@ https://github.com/baidingtech/operator-lesson-demo/blob/main/kubebuilder-demo
 
 ### 需求
 
-![img.png](img\img.png)
+![img.png](img/img.png)
 
 ```shell
 kubebuilder create api --group ingress --version v1beta1 --kind App
