@@ -727,7 +727,7 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 2. 部署
 
 ```shell
-IMG=wangtaotao2015/app-controller make deploy
+IMG=hdss7-222.zq.com/clientgo-demo/app-controller make deploy
 ```
 
 3. 验证
@@ -825,3 +825,68 @@ make dev
 ```shell
 make undev
 ```
+
+### 在集群中部署
+
+1. 修改Dockerfile
+
+```dockerfile
+# Build the manager binary
+FROM golang:1.22.12 AS builder
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+RUN go mod download
+
+# Copy the go source
+COPY cmd/main.go cmd/main.go
+COPY api/ api/
+COPY internal/controller/ internal/controller/
+# Copy utils包和模板
+COPY utils/ utils/
+COPY templates/ templates/
+
+# Build
+# the GOARCH has not a default value to allow the binary be built according to the host where the command
+# was called. For example, if we call make docker-build in a local env which has the Apple Silicon M1 SO
+# the docker BUILDPLATFORM arg will be linux/arm64 when for Apple x86 it will be linux/amd64. Therefore,
+# by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o manager cmd/main.go
+
+# Use distroless as minimal base image to package the manager binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM alpine:3.15.3
+WORKDIR /
+# Copy同时改变USER/GROUP
+COPY --from=builder --chown=65532:65532 /workspace/manager .
+COPY --from=builder --chown=65532:65532 /workspace/templates/ templates/
+USER 65532:65532
+
+
+ENTRYPOINT ["/manager"]
+```
+
+2. 制作镜像（由于go包无法下载，10.4.7.254:7890这是我本地的代理）这里省略了将hdss7-222.zq.com设置为insecure registry，以及/etc/hosts的配置
+
+```shell
+docker build --build-arg HTTPS_PROXY="http://10.4.7.254:7890" --build-arg HTTP_PROXY="http://10.4.7.254:7890" -t hdss7-222.zq.com/clientgo-demo/app-controller .
+```
+
+3. 上传镜像
+
+```shell
+docker push hdss7-222.zq.com/clientgo-demo/app-controller
+```
+
+部署
+
+```shell
+IMG=hdss7-222.zq.com/clientgo-demo/app-controller make deploy
+```
+
