@@ -18,7 +18,7 @@ package controller
 
 import (
 	"context"
-	"github.com/zyw/kubebuilder-demo/utils"
+	"github.com/hdssbks/kubebuilder-demo/utils"
 	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	ingressv1beta1 "github.com/zyw/kubebuilder-demo/api/v1beta1"
+	ingressv1beta1 "github.com/hdssbks/kubebuilder-demo/api/v1beta1"
 )
 
 // AppReconciler reconciles a App object

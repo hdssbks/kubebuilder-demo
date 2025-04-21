@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	ingressv1beta1 "github.com/zyw/kubebuilder-demo/api/v1beta1"
+	ingressv1beta1 "github.com/hdssbks/kubebuilder-demo/api/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 

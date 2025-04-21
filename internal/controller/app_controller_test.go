@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	ingressv1beta1 "github.com/zyw/kubebuilder-demo/api/v1beta1"
+	ingressv1beta1 "github.com/hdssbks/kubebuilder-demo/api/v1beta1"
 )
 
 var _ = Describe("App Controller", func() {

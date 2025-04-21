@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/zyw/kubebuilder-demo/test/utils"
+	"github.com/hdssbks/kubebuilder-demo/test/utils"
 )
 
 const namespace = "kubebuilder-demo-system"

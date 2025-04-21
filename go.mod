@@ -1,4 +1,4 @@
-module github.com/zyw/kubebuilder-demo
+module github.com/hdssbks/kubebuilder-demo
 
 go 1.22.12
 

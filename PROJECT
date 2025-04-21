@@ -6,7 +6,7 @@ domain: zq.com
 layout:
 - go.kubebuilder.io/v4
 projectName: kubebuilder-demo
-repo: github.com/zyw/kubebuilder-demo
+repo: github.com/hdssbks/kubebuilder-demo
 resources:
 - api:
     crdVersion: v1
@@ -15,7 +15,7 @@ resources:
   domain: zq.com
   group: ingress
   kind: App
-  path: github.com/zyw/kubebuilder-demo/api/v1beta1
+  path: github.com/hdssbks/kubebuilder-demo/api/v1beta1
   version: v1beta1
   webhooks:
     defaulting: true

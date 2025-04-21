@@ -34,8 +34,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	ingressv1beta1 "github.com/zyw/kubebuilder-demo/api/v1beta1"
-	"github.com/zyw/kubebuilder-demo/internal/controller"
+	ingressv1beta1 "github.com/hdssbks/kubebuilder-demo/api/v1beta1"
+	"github.com/hdssbks/kubebuilder-demo/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
