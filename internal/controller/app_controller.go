@@ -39,13 +39,15 @@ type AppReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// 由于我们的controller需要操作deployments，services，ingresses，当controller部署至集群中时，需要相应的权限，故需要添加相应的rbac
 //+kubebuilder:rbac:groups=ingress.zq.com,resources=apps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=ingress.zq.com,resources=apps/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=ingress.zq.com,resources=apps/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+
+// 由于我们的controller需要操作deployments，services，ingresses，当controller部署至集群中时，需要相应的权限，故需要添加相应的rbac
+// 添加完成后需要使用make manifests以创建rbac的manifests
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

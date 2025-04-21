@@ -10,19 +10,19 @@ patches:
   - patch: |
       - op: "add"
         path: "/spec/ipAddresses"
-        value: ["192.168.59.1"]
+        value: ["10.4.7.100"]
     target:
       kind: Certificate
   - patch: |
       - op: "add"
         path: "/webhooks/0/clientConfig/url"
-        value: "https://192.168.59.1:9443/mutate-ingress-baiding-tech-v1beta1-app"
+        value: "https://10.4.7.100:9443/mutate-ingress-zq-com-v1beta1-app"
     target:
       kind: MutatingWebhookConfiguration
   - patch: |
       - op: "add"
         path: "/webhooks/0/clientConfig/url"
-        value: "https://192.168.59.1:9443/validate-ingress-baiding-tech-v1beta1-app"
+        value: "https://10.4.7.100:9443/validate-ingress-zq-com-v1beta1-app"
     target:
       kind: ValidatingWebhookConfiguration
   - patch: |

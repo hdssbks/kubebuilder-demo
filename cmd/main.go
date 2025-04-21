@@ -93,9 +93,21 @@ func main() {
 		tlsOpts = append(tlsOpts, disableHTTP2)
 	}
 
-	webhookServer := webhook.NewServer(webhook.Options{
+	webhookOptions := webhook.Options{
 		TLSOpts: tlsOpts,
-	})
+	}
+	if os.Getenv("ENVIRONMENT") == "DEV" {
+		path, err := os.Getwd()
+		if err != nil {
+			setupLog.Error(err, "unable to get work dir")
+			os.Exit(1)
+		}
+		webhookOptions = webhook.Options{
+			TLSOpts: tlsOpts,
+			CertDir: path + "/certs",
+		}
+	}
+	webhookServer := webhook.NewServer(webhookOptions)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,

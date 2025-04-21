@@ -9,5 +9,5 @@ spec:
   # TODO(user): Add fields here
   enableSvc: false
   enableIngress: false
-  replicas: 1
+  replicas: 
   image: nginx:v1.13

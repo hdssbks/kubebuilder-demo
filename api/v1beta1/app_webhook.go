@@ -52,6 +52,7 @@ func (r *App) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
+// 在使用kubebuilder create webhook后，需要使用make manifests以创建webhook的manifests
 //+kubebuilder:webhook:path=/validate-ingress-zq-com-v1beta1-app,mutating=false,failurePolicy=fail,sideEffects=None,groups=ingress.zq.com,resources=apps,verbs=create;update,versions=v1beta1,name=vapp.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &App{}
