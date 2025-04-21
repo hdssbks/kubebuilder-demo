@@ -1,6 +1,6 @@
 module github.com/zyw/kubebuilder-demo
 
-go 1.21
+go 1.22.12
 
 require (
 	github.com/onsi/ginkgo/v2 v2.14.0
