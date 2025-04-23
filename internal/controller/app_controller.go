@@ -24,6 +24,7 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -37,6 +38,8 @@ import (
 type AppReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	// 添加事件上报机制，可以通过kubectl describe app app-sample查看到事件
+	Recorder record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=ingress.zq.com,resources=apps,verbs=get;list;watch;create;update;patch;delete
@@ -45,6 +48,7 @@ type AppReconciler struct {
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 
 // 由于我们的controller需要操作deployments，services，ingresses，当controller部署至集群中时，需要相应的权限，故需要添加相应的rbac
 // 添加完成后需要使用make manifests以创建rbac的manifests
@@ -65,7 +69,6 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
 	deploy := utils.NewDeploy(app)
 
 	if err := controllerutil.SetControllerReference(app, deploy, r.Scheme); err != nil {
@@ -81,8 +84,11 @@ func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		// Create Deployment
 		if err := r.Create(ctx, deploy); err != nil {
 			logger.Error(err, "create deployment failed")
+			// 写入事件
+			r.Recorder.Event(app, corev1.EventTypeWarning, "CreateDeploymentFailed", err.Error())
 			return ctrl.Result{}, err
 		}
+		r.Recorder.Event(app, corev1.EventTypeNormal, "CreateDeploymentSuccess", "Create deployment success")
 	}
 	if err == nil {
 		// Update Deploy
